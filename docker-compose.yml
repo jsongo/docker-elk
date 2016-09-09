@@ -1,24 +1,54 @@
-elasticsearch:
-  image: elasticsearch:latest
-  command: elasticsearch -Des.network.host=0.0.0.0
-  ports:
-    - "9200:9200"
-    - "9300:9300"
+version: '2'
 
-logstash:
-  build: logstash/
-  command: logstash -f /etc/logstash/conf.d/logstash.conf
-  volumes:
-    - ./logstash/config:/etc/logstash/conf.d
-  ports:
-    - "5000:5000"
-  links:
-    - elasticsearch
-kibana:
-  build: kibana/
-  volumes:
-    - ./kibana/config/:/opt/kibana/config/
-  ports:
-    - "5601:5601"
-  links:
-    - elasticsearch
+# fork from https://github.com/deviantony/docker-elk/blob/master/docker-compose.yml
+
+services:
+    elasticsearch:
+        image: docker.io/elasticsearch:latest
+        container_name: elasticsearch 
+        restart: always
+        command: elasticsearch -Des.network.host=0.0.0.0
+        ports:
+            - "9200:9200"
+            - "9300:9300"
+
+    logstash:
+        build: logstash/
+        image: logstash-mybuild
+        restart: always
+        container_name: logstash
+        command: logstash -f /etc/logstash/conf.d/logstash.conf
+        volumes:
+            - ./logstash/config:/etc/logstash/conf.d
+            - /data/logstash:/data/logstash
+        ports:
+            - "5000:5000"
+        links:
+            - elasticsearch
+            - redis-server 
+        environment:
+            - LS_HEAP_SIZE=1024m
+            - VERSION=1.0.1
+
+    kibana:
+        image: daocloud.io/jsongo/elk
+        container_name: kibana
+        restart: always
+        volumes:
+            - ./kibana/config/:/opt/kibana/config/
+        ports:
+            - "5601:5601"
+        links:
+            - elasticsearch
+
+    redis-server:
+        image: redis
+        command: redis-server /usr/local/etc/redis/redis.conf
+        container_name: redis-logstash
+        ports:
+            - "6380:6379"
+        restart: always
+        volumes:
+            - ./redis/redis-server.conf:/usr/local/etc/redis/redis.conf
+            - /data/redis2:/data/redis
+            - /data/redis2/logs:/var/log
