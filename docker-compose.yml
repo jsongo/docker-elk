@@ -28,7 +28,7 @@ services:
             - redis-server 
         environment:
             - LS_HEAP_SIZE=1024m
-            - VERSION=1.0.1
+            - VERSION=1.0.2
 
     kibana:
         image: daocloud.io/jsongo/elk
